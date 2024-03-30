@@ -11,10 +11,10 @@ Current commands:
 
 ## Setup
 ```bash
-cp src/scripts/fzf-haskell.sh ~/.bash/
+cp src/scripts/fzf-haskell.sh ~/.config/bash/
 ```
 
 Add this line to `.bashrc`
 ```bash
-source ~/.bash/fzf-haskell.sh
+source ~/.config/bash/fzf-haskell.sh
 ```

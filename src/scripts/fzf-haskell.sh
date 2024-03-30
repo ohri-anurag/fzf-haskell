@@ -1,6 +1,6 @@
 findTag () {
   local command_string=$(cat <<'EOF'
-  bat --theme="Horizon Anurag Ohri" -n --color=always \
+  bat --theme="Horizon Anurag Ohri" -n --color=always --style=full \
     -H $(echo {} | awk '{print $NF}') \
     -r $(\
       echo {} |\
@@ -32,7 +32,7 @@ EOF
 
 findAll () {
   local command_string=$(cat <<'EOF'
-  bat --theme="Horizon Anurag Ohri" -n --color=always \
+  bat --theme="Horizon Anurag Ohri" -n --color=always --style=full \
     -H $(echo {} | awk '{print $NF}' | awk -F ':' '{print $NF}') \
     -r $(\
       echo {} |\
@@ -66,6 +66,28 @@ EOF
 }
 
 regenerateTags () {
-  cd $rootDir
   nix-shell -p haskellPackages.hasktags --run "hasktags -c ."
+}
+
+switchTab () {
+  local command_string=$(cat <<'EOF'
+  bat --theme="Horizon Anurag Ohri" -n --color=always --style=full -r :500 {}
+EOF
+)
+  local filepath=$(
+    fzf --preview "$command_string"
+  )
+  if [ "$filepath" != "" ]; then
+    code -g $filepath
+  fi
+}
+
+openFolder () {
+  ranger --choosedir=this
+  code $(bat this) && rm this
+}
+
+openFile () {
+  ranger --choosefile=this
+  code -g $(bat this) && rm this
 }

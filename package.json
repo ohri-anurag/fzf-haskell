@@ -28,6 +28,18 @@
       {
         "command": "fzf-haskell.regenerateTags",
         "title": "Regenerate Tags"
+      },
+      {
+        "command": "fzf-haskell.switchTab",
+        "title": "Switch Tab"
+      },
+      {
+        "command": "fzf-haskell.openFolder",
+        "title": "Open Folder"
+      },
+      {
+        "command": "fzf-haskell.openFile",
+        "title": "Open File"
       }
     ]
   },

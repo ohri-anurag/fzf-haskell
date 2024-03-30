@@ -12,8 +12,7 @@ function getCurrentWord (): string | undefined {
   const cursorPosition = editor.selection.active;
   const wordRange = editor.document.getWordRangeAtPosition(cursorPosition);
   if (!wordRange) {
-      vscode.window.showErrorMessage("No word found under the cursor.");
-      return;
+      return "";
   }
 
   return editor.document.getText(wordRange);
@@ -93,10 +92,61 @@ export function activate(context: vscode.ExtensionContext) {
     terminal.show();
   });
 
+  let disposable4 = vscode.commands.registerCommand('fzf-haskell.switchTab', () => {
+    // The code you place here will be executed every time your command is executed
+    // Display a message box to the user
+    if (!vscode.workspace.workspaceFolders) {
+      vscode.window.showErrorMessage("No workspace opened")
+      return
+    }
+
+    let tabs = vscode.window.tabGroups.activeTabGroup.tabs.map(t => {
+      let input = t.input as {uri : vscode.Uri};
+      return input.uri.fsPath
+    });
+
+
+    let terminal = getTerminal();
+    terminal.sendText(`echo "${tabs.join("\n")}" | switchTab`);
+
+    terminal.show();
+  });
+
+  let disposable5 = vscode.commands.registerCommand('fzf-haskell.openFolder', () => {
+    // The code you place here will be executed every time your command is executed
+    // Display a message box to the user
+    if (!vscode.workspace.workspaceFolders) {
+      vscode.window.showErrorMessage("No workspace opened")
+      return
+    }
+
+    let terminal = getTerminal();
+    terminal.sendText(`openFolder`);
+
+    terminal.show();
+  });
+
+  let disposable6 = vscode.commands.registerCommand('fzf-haskell.openFile', () => {
+    // The code you place here will be executed every time your command is executed
+    // Display a message box to the user
+    if (!vscode.workspace.workspaceFolders) {
+      vscode.window.showErrorMessage("No workspace opened")
+      return
+    }
+
+    let terminal = getTerminal();
+    terminal.sendText(`openFile`);
+
+    terminal.show();
+  });
+
 
   context.subscriptions.push(disposable);
   context.subscriptions.push(disposable2);
   context.subscriptions.push(disposable3);
+  context.subscriptions.push(disposable4);
+  context.subscriptions.push(disposable5);
+  context.subscriptions.push(disposable6);
 }
 
 // This method is called when your extension is deactivated
