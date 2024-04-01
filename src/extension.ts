@@ -2,11 +2,10 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 
-function getCurrentWord (): string | undefined {
+function getCurrentWord (): string {
   let editor = vscode.window.activeTextEditor
   if (!editor) {
-    vscode.window.showErrorMessage("No active editor")
-    return
+    return "";
   }
 
   const cursorPosition = editor.selection.active;
@@ -51,9 +50,6 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     const currentWord = getCurrentWord();
-    if (!currentWord) {
-      return
-    }
     let terminal = getTerminal();
     terminal.sendText(`findTag ${currentWord}`);
 
@@ -69,9 +65,6 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     const currentWord = getCurrentWord();
-    if (!currentWord) {
-      return
-    }
     let terminal = getTerminal();
     terminal.sendText(`findAll ${currentWord}`);
 
