@@ -11,7 +11,7 @@ Current commands:
 
 ## Setup
 ```bash
-cp src/scripts/fzf-haskell.sh ~/.config/bash/
+bash src/scripts/install.sh
 ```
 
 Add this line to `.bashrc`
