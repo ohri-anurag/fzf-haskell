@@ -8,6 +8,13 @@ function getCurrentWord (): string {
     return "";
   }
 
+  // Try and get the user's selection if they have selected something
+  const selection = editor.selection;
+  const text = editor.document.getText(selection);
+  if (text !== "") {
+      return text;
+  }
+
   const cursorPosition = editor.selection.active;
   const wordRange = editor.document.getWordRangeAtPosition(cursorPosition);
   if (!wordRange) {
@@ -42,8 +49,6 @@ export function activate(context: vscode.ExtensionContext) {
   // Now provide the implementation of the command with registerCommand
   // The commandId parameter must match the command field in package.json
   let disposable = vscode.commands.registerCommand('fzf-haskell.findTag', () => {
-    // The code you place here will be executed every time your command is executed
-    // Display a message box to the user
     if (!vscode.workspace.workspaceFolders) {
       vscode.window.showErrorMessage("No workspace opened")
       return
@@ -57,8 +62,6 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   let disposable2 = vscode.commands.registerCommand('fzf-haskell.findAll', () => {
-    // The code you place here will be executed every time your command is executed
-    // Display a message box to the user
     if (!vscode.workspace.workspaceFolders) {
       vscode.window.showErrorMessage("No workspace opened")
       return
@@ -72,8 +75,6 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   let disposable3 = vscode.commands.registerCommand('fzf-haskell.regenerateTags', () => {
-    // The code you place here will be executed every time your command is executed
-    // Display a message box to the user
     if (!vscode.workspace.workspaceFolders) {
       vscode.window.showErrorMessage("No workspace opened")
       return
@@ -86,18 +87,18 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   let disposable4 = vscode.commands.registerCommand('fzf-haskell.switchTab', () => {
-    // The code you place here will be executed every time your command is executed
-    // Display a message box to the user
     if (!vscode.workspace.workspaceFolders) {
       vscode.window.showErrorMessage("No workspace opened")
       return
     }
 
-    let tabs = vscode.window.tabGroups.activeTabGroup.tabs.map(t => {
-      let input = t.input as {uri : vscode.Uri};
-      return input.uri.fsPath
+    let tabs: string [] = [];
+    vscode.window.tabGroups.activeTabGroup.tabs.forEach(t => {
+      let input = t.input as {uri? : vscode.Uri};
+      if (input && input.uri) {
+        tabs.push(input.uri.fsPath);
+      }
     });
-
 
     let terminal = getTerminal();
     terminal.sendText(`echo "${tabs.join("\n")}" | switchTab`);
@@ -106,13 +107,6 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   let disposable5 = vscode.commands.registerCommand('fzf-haskell.openFolder', () => {
-    // The code you place here will be executed every time your command is executed
-    // Display a message box to the user
-    if (!vscode.workspace.workspaceFolders) {
-      vscode.window.showErrorMessage("No workspace opened")
-      return
-    }
-
     let terminal = getTerminal();
     terminal.sendText(`openFolder`);
 
@@ -120,15 +114,43 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   let disposable6 = vscode.commands.registerCommand('fzf-haskell.openFile', () => {
-    // The code you place here will be executed every time your command is executed
-    // Display a message box to the user
+    let currentTab = vscode.window.activeTextEditor?.document.uri.fsPath;
+    // If there is an active tab, open ranger with the current tab's directory
+    let dirPath = "";
+    if (currentTab) {
+      dirPath = currentTab.substring(0, currentTab.lastIndexOf("/"));
+    }
+
+    let terminal = getTerminal();
+    terminal.sendText(`openFile ${dirPath}`);
+
+    terminal.show();
+  });
+
+  let disposable7 = vscode.commands.registerCommand('fzf-haskell.hoogleSearch', async () => {
     if (!vscode.workspace.workspaceFolders) {
       vscode.window.showErrorMessage("No workspace opened")
       return
     }
 
+    // First, we try to get the user's selection or the current word
+    const currentWord = getCurrentWord();
+    let searchWord = currentWord;
+      // Since there is nothing that the user has selected or the cursor is on, we ask the user for input
+
+    const userInput = await vscode.window.showInputBox({
+      placeHolder: "A hoogle Query",
+      prompt: "Search Hoogle for:",
+      value: searchWord
+    });
+
+    if (userInput !== undefined) {
+      // Handle the input
+      searchWord = userInput;
+    }
+
     let terminal = getTerminal();
-    terminal.sendText(`openFile`);
+    terminal.sendText(`hoogleSearch ${searchWord}`);
 
     terminal.show();
   });
@@ -140,6 +162,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(disposable4);
   context.subscriptions.push(disposable5);
   context.subscriptions.push(disposable6);
+  context.subscriptions.push(disposable7);
 }
 
 // This method is called when your extension is deactivated

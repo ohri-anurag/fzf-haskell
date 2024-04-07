@@ -6,7 +6,7 @@ findTag () {
   else
     init=0
   fi
-  bat --theme="Horizon Anurag Ohri" -n --color=always --style=full \
+  bat --theme="Horizon Anurag Ohri" --color=always --style=full \
     -H {3} -r $init:$((line+10)) {2}
 EOF
 )
@@ -33,7 +33,7 @@ findAll () {
   else
     init=0
   fi
-  bat --theme="Horizon Anurag Ohri" -n --color=always --style=full \
+  bat --theme="Horizon Anurag Ohri" --color=always --style=full \
     -H {2} -r $init:$((line+10)) {1}
 EOF
 )
@@ -43,9 +43,8 @@ EOF
     query="-q $1"
   fi
   local filepath=$(\
-    fd -t f -0 |\
-    xargs --null awk '{print FILENAME"\0"FNR"\0"$0}' |\
-    fzf --preview "$command_string" $query --delimiter "\0" --with-nth 3 |\
+    rg --column --line-number --no-heading --field-match-separator='\0' . |\
+    fzf --preview "$command_string" $query --delimiter "\0" --with-nth 4 |\
     awk -F '\0' '{print $1":"$2":0"}'
   )
   if [ "$filepath" != "" ]; then
@@ -59,7 +58,7 @@ regenerateTags () {
 
 switchTab () {
   local command_string=$(cat <<'EOF'
-  bat --theme="Horizon Anurag Ohri" -n --color=always --style=full -r :500 {}
+  bat --theme="Horizon Anurag Ohri" --color=always --style=full -r :500 {}
 EOF
 )
   local filepath=$(
@@ -71,7 +70,7 @@ EOF
 }
 
 openFolder () {
-  ranger --choosedir=this
+  ranger --show-only-dirs --choosedir=this
   contents=$(bat this)
   rm this
   if [ "$contents" != "" ]; then
@@ -80,6 +79,25 @@ openFolder () {
 }
 
 openFile () {
-  ranger --choosefile=this
-  code -g $(bat this) && rm this
+  ranger --choosefile=this $1
+  if [[ -f this ]]; then
+    code -g $(bat this) && rm this
+  fi
+}
+
+hoogleSearch () {
+  local search_results=$(hoogle search --json $1)
+  if [[ "$search_results" = "No results found" ]]; then
+    echo "No results found"
+  else
+    local url=$(
+      echo $search_results |\
+      jq -r '.[] | "\(.package.name)\u0000\(.module.name)\u0000\(.item)\u0000\(.url)"' |\
+      fzf --delimiter '\0' --with-nth 2 --preview "printf {1}\"\n\"{2}\"\n\"{3} > tmp.hs | bat --color=always --style=full tmp.hs" |\
+      cut -d $'\0' -f4 && rm tmp.hs
+    )
+    if [[ "$url" != "" ]]; then
+      google-chrome $url
+    fi
+  fi
 }

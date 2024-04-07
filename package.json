@@ -40,6 +40,10 @@
       {
         "command": "fzf-haskell.openFile",
         "title": "Open File"
+      },
+      {
+        "command": "fzf-haskell.hoogleSearch",
+        "title": "Hoogle Search"
       }
     ]
   },
