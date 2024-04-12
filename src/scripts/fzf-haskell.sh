@@ -53,7 +53,7 @@ EOF
 }
 
 regenerateTags () {
-  nix-shell -p haskellPackages.hasktags --run "hasktags -c ."
+  hasktags -c .
 }
 
 switchTab () {
@@ -70,7 +70,7 @@ EOF
 }
 
 openFolder () {
-  ranger --show-only-dirs --choosedir=this
+  yazi --cwd-file "$PWD/this"
   contents=$(bat this)
   rm this
   if [ "$contents" != "" ]; then
@@ -79,7 +79,7 @@ openFolder () {
 }
 
 openFile () {
-  ranger --choosefile=this $1
+  yazi --chooser-file "$PWD/this" $1
   if [[ -f this ]]; then
     code -g $(bat this) && rm this
   fi
