@@ -4,3 +4,5 @@ node_modules
 .vscode
 .vscode-test/
 *.vsix
+src/elm/elm-stuff
+src/elm/index.*

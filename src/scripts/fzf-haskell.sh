@@ -6,7 +6,7 @@ findTag () {
   else
     init=0
   fi
-  bat --theme="Horizon Anurag Ohri" --color=always --style=full \
+  bat --color=always --style=full \
     -H {3} -r $init:$((line+10)) {2}
 EOF
 )
@@ -21,7 +21,7 @@ EOF
     awk '{print "/home/anuragohri92/bellroy/haskell/"$(NF-1)":"$NF":0"}'
   )
   if [ "$filepath" != "" ]; then
-    code -g $filepath
+    code -g -r $filepath
   fi
 }
 
@@ -33,7 +33,7 @@ findAll () {
   else
     init=0
   fi
-  bat --theme="Horizon Anurag Ohri" --color=always --style=full \
+  bat --color=always --style=full \
     -H {2} -r $init:$((line+10)) {1}
 EOF
 )
@@ -43,12 +43,27 @@ EOF
     query="-q $1"
   fi
   local filepath=$(\
-    rg --column --line-number --no-heading --field-match-separator='\0' . |\
+    rg --column --line-number --no-heading --hidden --field-match-separator='\0' . |\
     fzf --preview "$command_string" $query --delimiter "\0" --with-nth 4 |\
     awk -F '\0' '{print $1":"$2":0"}'
   )
   if [ "$filepath" != "" ]; then
-    code -g $filepath
+    code -g -r $filepath
+  fi
+}
+
+findFile () {
+  local command_string=$(cat <<'EOF'
+  bat --color=always --style=full {}
+EOF
+)
+  local filepath=$(\
+    fd -t f -H |\
+    fzf --preview "$command_string" |\
+    awk -F '\0' '{print $1":"$2":0"}'
+  )
+  if [ "$filepath" != "" ]; then
+    code -g -r $filepath
   fi
 }
 
@@ -58,14 +73,14 @@ regenerateTags () {
 
 switchTab () {
   local command_string=$(cat <<'EOF'
-  bat --theme="Horizon Anurag Ohri" --color=always --style=full -r :500 {}
+  bat --color=always --style=full -r :500 {}
 EOF
 )
   local filepath=$(
     fzf --preview "$command_string" --delimiter "/" --with-nth -1
   )
   if [ "$filepath" != "" ]; then
-    code -g $filepath
+    code -g -r $filepath
   fi
 }
 
@@ -81,7 +96,7 @@ openFolder () {
 openFile () {
   yazi --chooser-file "$PWD/this" $1
   if [[ -f this ]]; then
-    code -g $(bat this) && rm this
+    code -g -r $(bat this) && rm this
   fi
 }
 

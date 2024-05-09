@@ -14,7 +14,7 @@
     "url": "https://github.com/ohri-anurag/fzf-haskell"
   },
   "activationEvents": [],
-  "main": "./out/extension.js",
+  "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
@@ -44,16 +44,31 @@
       {
         "command": "fzf-haskell.hoogleSearch",
         "title": "Hoogle Search"
+      },
+      {
+        "command": "fzf-haskell.findFile",
+        "title": "Fuzzy Find File"
+      },
+      {
+        "command": "fzf-haskell.switchTabVS",
+        "title": "Switch Tab VS"
       }
     ]
   },
+  "workspaces": [
+    "src/elm"
+  ],
   "scripts": {
-    "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "vscode:prepublish": "npm run esbuild-base -- --minify",
+    "esbuild-base": "npm run -w src/elm build && esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+    "esbuild": "npm run esbuild-base -- --sourcemap",
+    "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
+    "test-compile": "tsc -p ./"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",
@@ -63,10 +78,12 @@
     "@typescript-eslint/parser": "^7.0.2",
     "@vscode/test-cli": "^0.0.6",
     "@vscode/test-electron": "^2.3.9",
+    "esbuild": "^0.21.1",
     "eslint": "^8.56.0",
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@vscode/vsce": "^2.24.0"
+    "@vscode/vsce": "^2.24.0",
+    "highlight.js": "^11.9.0"
   }
 }
