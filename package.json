@@ -52,6 +52,10 @@
       {
         "command": "fzf-haskell.switchTabVS",
         "title": "Switch Tab VS"
+      },
+      {
+        "command": "fzf-haskell.findFileVS",
+        "title": "Find File VS"
       }
     ]
   },
@@ -65,7 +69,7 @@
     "lint": "eslint src --ext ts",
     "test": "vscode-test",
     "vscode:prepublish": "npm run esbuild-base -- --minify",
-    "esbuild-base": "npm run -w src/elm build && esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+    "esbuild-base": "npm run -w src/elm build && esbuild ./src/extension.mts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
     "esbuild": "npm run esbuild-base -- --sourcemap",
     "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
     "test-compile": "tsc -p ./"
@@ -83,7 +87,8 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@types/he": "^1.2.3",
     "@vscode/vsce": "^2.24.0",
-    "highlight.js": "^11.9.0"
+    "ansi_up": "^6.0.2"
   }
 }

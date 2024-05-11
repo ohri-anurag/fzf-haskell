@@ -59,91 +59,20 @@ function getHtml(js) {
         width: 50%;
         height: 100%;
         overflow-y: auto;
+        background-color: transparent;
+        color: white;
       }
-
-      pre code.hljs {
-        display: block;
-        overflow-x: auto;
-        padding: 1em
+      input {
+        background-color: transparent;
+        color: white;
+        border: none;
+        border-top: 2px solid red;
+        margin: 0;
+        margin-top: 1px;
+        outline: none;
       }
-
-      code.hljs {
-        padding: 3px 5px
-      }
-
-      .hljs {
-        color: #abb2bf;
-        background: #282c34
-      }
-
-      .hljs-comment,
-      .hljs-quote {
-        color: #5c6370;
-        font-style: italic
-      }
-
-      .hljs-doctag,
-      .hljs-keyword,
-      .hljs-formula {
-        color: #c678dd
-      }
-
-      .hljs-section,
-      .hljs-name,
-      .hljs-selector-tag,
-      .hljs-deletion,
-      .hljs-subst {
-        color: #e06c75
-      }
-
-      .hljs-literal {
-        color: #56b6c2
-      }
-
-      .hljs-string,
-      .hljs-regexp,
-      .hljs-addition,
-      .hljs-attribute,
-      .hljs-meta .hljs-string {
-        color: #98c379
-      }
-
-      .hljs-attr,
-      .hljs-variable,
-      .hljs-template-variable,
-      .hljs-type,
-      .hljs-selector-class,
-      .hljs-selector-attr,
-      .hljs-selector-pseudo,
-      .hljs-number {
-        color: #d19a66
-      }
-
-      .hljs-symbol,
-      .hljs-bullet,
-      .hljs-link,
-      .hljs-meta,
-      .hljs-selector-id,
-      .hljs-title {
-        color: #61aeee
-      }
-
-      .hljs-built_in,
-      .hljs-title.class_,
-      .hljs-class .hljs-title {
-        color: #e6c07b
-      }
-
-      .hljs-emphasis {
-        font-style: italic
-      }
-
-      .hljs-strong {
-        font-weight: 700
-      }
-
-      .hljs-link {
-        text-decoration: underline
+      input:focus {
+        outline: none;
       }
     </style>
     <script>
@@ -160,6 +89,11 @@ function getHtml(js) {
       var app = Elm.Main.init({
         node: document.getElementById('myapp')
       });
+      // var iframe = document.getElementById('preview');
+      // var style = document.createElement('style');
+      // style.innerText = '* {color: white;}';
+      var preview = document.getElementById('preview');
+
       app.ports.sendMessage.subscribe(function(message) {
         console.log(message);
         vscode.postMessage(message);
@@ -169,13 +103,20 @@ function getHtml(js) {
         if (event.data.tabs) {
           app.ports.messageReceiver.send(event.data.tabs);
         }
-        document.getElementById('code').innerHTML = event.data.preview;
+        // iframe.setAttribute('srcdoc', event.data.preview);
+        // setTimeout(() => {iframe.contentDocument.head.appendChild(style);});
+        if (event.data.preview) {
+          preview.innerHTML = event.data.preview;
+        }
       })
-      setTimeout(() => {
-        let elem = document.querySelector('.files');
-        elem.focus();
-        console.log(elem);
-      }, 100);
+      window.onload = function () {
+        console.log('GOTTTTTTTTTTTTTTTTTTT onload');
+        console.log(window.document.querySelector('.files'));
+        window.document.querySelector('.files').onfocus = function () {
+          console.log('GOTTTTTTTTTTTTTTTTTTT focus');
+          window.getElementById('input').focus();
+        };
+      };
     </script>
   </body>
 

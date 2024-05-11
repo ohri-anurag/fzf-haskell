@@ -13,13 +13,12 @@ import Browser
 import Html exposing (..)
 import Html.Attributes exposing (class)
 import Json.Decode as Decode
-import Html.Attributes exposing (property)
 import Json.Encode as Encode
-import Html.Attributes exposing (attribute)
 import Html.Attributes exposing (id)
 import Browser.Events exposing (onKeyDown)
 import Platform.Sub exposing (batch)
 import Maybe exposing (andThen)
+import Html.Events exposing (onInput)
 
 
 -- MAIN
@@ -93,6 +92,7 @@ type Msg
   = Init (List Tab)
   | NoOp String
   | ChangeSelection Direction
+  | Filter String
 
 at : Int -> List a -> Maybe a
 at index list =
@@ -140,7 +140,7 @@ update msg model =
           )
         Other ->
           (model, Cmd.none)
-
+    Filter string -> (model, sendMessage <| Encode.object [("action", Encode.string "filter"), ("value", Encode.string string)])
 
 -- PORTS
 
@@ -171,11 +171,11 @@ view : Model -> Html Msg
 view model =
   div [class "split"] [
     div [class "files"] <|
-      List.indexedMap (\i t -> div [class <| if Just i == model.selectedFile then "selected" else "file"] [text t.showValue]) model.tabs
+      input [id "input", onInput Filter] []
+      ::
+       List.indexedMap (\i t -> div [class <| if Just i == model.selectedFile then "selected" else "file"] [text t.showValue]) model.tabs
     ,
-    div [class "preview"] [
-      pre [] [
-        code [id "code"] []
-      ]
+    pre [] [
+      code [class "preview", id "preview"] []
     ]
   ]

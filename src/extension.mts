@@ -1,8 +1,10 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import hljs from 'highlight.js';
 import contents from './elm/index.txt';
+import { AnsiUp } from 'ansi_up'
+const ansi_up = new AnsiUp();
+import { execSync } from 'child_process';
 
 function getCurrentWord (): string {
   let editor = vscode.window.activeTextEditor
@@ -169,31 +171,38 @@ export function activate(context: vscode.ExtensionContext) {
     terminal.show();
   });
 
-  let disposable9 = vscode.commands.registerCommand('fzf-haskell.showModal', async () => {
-    const panel = vscode.window.createWebviewPanel(
-        'html',
-        'File Preview',
-        vscode.ViewColumn.Active,
-        {
-          enableScripts: true,
-          retainContextWhenHidden: true
-        }
-    );
-
+  let disposable9 = vscode.commands.registerCommand('fzf-haskell.switchTabVS', async () => {
     let tabs: string [] = [];
+    let fileUri: vscode.Uri | undefined = undefined;
     vscode.window.tabGroups.activeTabGroup.tabs.forEach(t => {
       let input = t.input as {uri? : vscode.Uri};
       if (input && input.uri && input.uri.fsPath) {
+        if (fileUri === undefined) {
+          fileUri = input.uri;
+        }
         tabs.push(input.uri.fsPath);
       }
     });
+
+    if (!fileUri) {
+      vscode.window.showErrorMessage("No file opened");
+      return;
+    }
+
+    const panel = vscode.window.createWebviewPanel(
+      'html',
+      'Switch Tabs',
+      vscode.ViewColumn.Active,
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true
+      }
+    );
 
     let editor = vscode.window.activeTextEditor
     if (!editor) {
       return;
     }
-
-    const fileUri = editor.document.uri;
 
     let tabsItems = tabs.map(t => ({value: t, showValue: t}));
     
@@ -201,14 +210,16 @@ export function activate(context: vscode.ExtensionContext) {
     panel.webview.onDidReceiveMessage(async message => {
       switch (message.action) {
         case "display":
-          let uri = vscode.Uri.file(message.value)
-          vscode.workspace.fs.readFile(uri).then(fileContent =>  {
-            setTimeout(() => {panel.webview.postMessage({preview: hljs.highlightAuto(fileContent.toString()).value});}, 0);
-          });
+          let code = getHighlightedCode(message.value);
+          panel.webview.postMessage({preview: code});
           break;
         case "open":
           await openFile(message.value);
           panel.dispose();
+          break;
+        case "filter":
+          let filteredTabs = getFilteredTabs(message.value, tabsItems);
+          panel.webview.postMessage({tabs: filteredTabs});
           break;
         default:
           break;
@@ -216,13 +227,72 @@ export function activate(context: vscode.ExtensionContext) {
       
     });
 
-    vscode.workspace.fs.readFile(fileUri).then(fileContent =>  {
+    vscode.commands.executeCommand('workbench.action.output.toggleOutput');
+    let code = getHighlightedCode(fileUri.fsPath);
+    panel.webview.postMessage({tabs: tabsItems, preview: code});
+    setTimeout(() => {
       vscode.commands.executeCommand('workbench.action.output.toggleOutput');
-      setTimeout(() => {
-        panel.webview.postMessage({tabs: tabsItems, preview: hljs.highlightAuto(fileContent.toString()).value});
-        vscode.commands.executeCommand('workbench.action.output.toggleOutput');
-      }, 0);
+    }, 100);
+  });
+
+  let disposable10 = vscode.commands.registerCommand('fzf-haskell.findFileVS', async () => {
+    let tabs: string [] = [];
+    let fileUri: vscode.Uri | undefined = undefined;
+    let workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+    if (workspaceRoot === undefined) {
+      return;
+    }
+    getAllFiles(workspaceRoot);
+
+    if (!fileUri) {
+      vscode.window.showErrorMessage("No file opened");
+      return;
+    }
+
+    const panel = vscode.window.createWebviewPanel(
+      'html',
+      'Switch Tabs',
+      vscode.ViewColumn.Active,
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true
+      }
+    );
+
+    let editor = vscode.window.activeTextEditor
+    if (!editor) {
+      return;
+    }
+
+    let tabsItems = tabs.map(t => ({value: t, showValue: t}));
+    
+    panel.webview.html = contents;
+    panel.webview.onDidReceiveMessage(async message => {
+      switch (message.action) {
+        case "display":
+          let code = getHighlightedCode(message.value);
+          panel.webview.postMessage({preview: code});
+          break;
+        case "open":
+          await openFile(message.value);
+          panel.dispose();
+          break;
+        case "filter":
+          let filteredTabs = getFilteredTabs(message.value, tabsItems);
+          panel.webview.postMessage({tabs: filteredTabs});
+          break;
+        default:
+          break;
+      }
+      
     });
+
+    vscode.commands.executeCommand('workbench.action.output.toggleOutput');
+    let code = getHighlightedCode(fileUri.fsPath);
+    panel.webview.postMessage({tabs: tabsItems, preview: code});
+    setTimeout(() => {
+      vscode.commands.executeCommand('workbench.action.output.toggleOutput');
+    }, 100);
   });
 
   context.subscriptions.push(disposable);
@@ -234,6 +304,27 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(disposable7);
   context.subscriptions.push(disposable8);
   context.subscriptions.push(disposable9);
+}
+
+function getHighlightedCode(filepath: string): string {
+    return ansi_up.ansi_to_html(execSync(`unbuffer bat --paging=never ${filepath}`, {encoding: 'utf-8'}));
+}
+
+function getFilteredTabs(filter: string, tabs: {value: string, showValue: string}[]): {value: string, showValue: string}[] {
+  if (tabs.length === 0 || filter === "") {
+    return tabs;
+  }
+  let result = execSync(`echo "${tabs.map(t => t.showValue).join("\n")}" | fzf -f ${filter}`, {encoding: 'utf-8'});
+  console.log(result);
+  let resultSet = new Set(result.split("\n"));
+
+  return tabs.filter(t => resultSet.has(t.showValue));
+}
+
+function getAllFiles(dirPath: string) {
+  let result = execSync(`fd -t f -H`, {encoding: 'utf-8'});
+  console.log(result);
+  return result.split("\n");
 }
 
 async function openFile(filePath: string) {
